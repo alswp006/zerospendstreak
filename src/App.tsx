@@ -23,6 +23,8 @@ export default function App() {
           }
         />
       )}
+      {/* 정의되지 않은 경로는 흰 화면 대신 홈으로 — 뒤로가기/오탐 탭 이후에도 항상 뭔가 보이게 한다. */}
+      <Route path="*" element={<Home />} />
     </Routes>
   );
 }

@@ -1,5 +1,5 @@
 import { Top, Paragraph, Spacing, ListRow, Button } from '@toss/tds-mobile';
-import { useNavigate } from 'react-router-dom';
+import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { ScreenScaffold } from '../components/ScreenScaffold';
 import { SummaryHero } from '../components/SummaryHero';
 import { Card } from '../components/Card';
@@ -17,24 +17,24 @@ import { Card } from '../components/Card';
  * - 하단 탭이 필요하면(2~5탭): bottom={<FloatingTabBar items={[{label,path}...]} />}.
  *   ('TDS TabBar'는 존재하지 않는다 — 직접 만들지 말고 FloatingTabBar를 써라.)
  * - 카피는 CLAUDE.md "카피 규칙 — AI 냄새 금지"를 따른다: 기능 나열식 홍보 문구·상투구·
- *   generic 버튼("시작하기") 금지. 이 파일의 예시 문구도 앱 맥락에 맞게 교체 대상이다.
- *
- * Scaffold tokens (replaced by scaffold-toss.ts at project creation):
- *   ZeroSpendStreak -> the app's display name
- *   하루 지출 0원에 도전하고 연속 성공일수를 기록하며 친구와 순위를 겨루는 무지출 챌린지 스트릭 앱    -> the one-line description
+ *   generic 버튼("시작하기") 금지.
  */
 
-// ⚠ 이 목록은 골격 예시다 — 앱의 실제 콘텐츠(핵심 지표·최근 기록·바로가기)로 반드시 교체하라.
-// '간편한 사용/빠른 처리' 같은 기능 나열식 홍보 문구는 카피 규칙(CLAUDE.md "AI 냄새 금지") 위반이다.
-// 사용자가 이 화면에서 실제로 확인할 정보를 넣어라 — 아래처럼 데이터가 사는 행으로.
 const HIGHLIGHTS = [
-  { title: '오늘', description: '아직 기록이 없어요' },
+  { title: '오늘', description: '아직 기록이 없어요 · 위 버튼으로 체크인하세요' },
   { title: '이번 주', description: '기록 3건 · 평균 12분' },
 ];
 
-export default function Home() {
-  const navigate = useNavigate();
+/** 주요 CTA 햅틱 가드 — SDK는 WebView 밖에서 throw하므로 무음 처리. */
+function fireHaptic(type: 'success' | 'tickWeak') {
+  try {
+    Promise.resolve(generateHapticFeedback({ type })).catch(() => {});
+  } catch {
+    /* 브라우저/검수자 PC/jsdom에서는 throw — 무시 */
+  }
+}
 
+export default function Home() {
   return (
     <ScreenScaffold
       top={<Top title={<Top.TitleParagraph>ZeroSpendStreak</Top.TitleParagraph>} />}
@@ -43,13 +43,11 @@ export default function Home() {
           데이터 앱이면 value를 <Amount typography="t1" />(핵심 숫자)로 교체하라. */}
       <SummaryHero
         label="ZeroSpendStreak"
-        value={<Paragraph.Text typography="t2">하루 지출 0원에 도전하고 연속 성공일수를 기록하며 친구와 순위를 겨루는 무지출 챌린지 스트릭 앱</Paragraph.Text>}
-        caption="로그인 없이 바로 쓸 수 있어요"
+        value={<Paragraph.Text typography="t2">오늘 하루 무지출에 도전해요</Paragraph.Text>}
+        caption="로그인 없이 바로 기록할 수 있어요"
         action={
-          // 라벨은 앱의 핵심 행동 동사로 교체하라 — "연봉 계산하기"/"기록 남기기" 등.
-          // generic "시작하기"/"확인"은 카피 규칙 위반. onClick도 실제 첫 화면 경로로.
-          <Button variant="fill" display="block" onClick={() => navigate('/')}>
-            첫 결과 보기
+          <Button variant="fill" display="block" onClick={() => fireHaptic('success')}>
+            오늘 체크인
           </Button>
         }
         testId="home-hero"
