@@ -87,6 +87,7 @@ export {};
     TossRewardAd.tsx
   hooks/
   lib/
+    contract.ts
     storage.ts
     types.ts
     utils.ts
@@ -101,6 +102,7 @@ export {};
   vite-env.d.ts
 
 ### Exports (src/lib/)
+- contract.ts: export type CheckIn =; export type Badge =; export type RecoveryTicket =; export type UserProfile =; export type Stats =; export type DateKey = string; export type RankingEntry =; export type FriendGroup =
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
 - utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
 
