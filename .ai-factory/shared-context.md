@@ -88,6 +88,7 @@ export {};
   hooks/
   lib/
     contract.ts
+    date.ts
     storage.ts
     types.ts
     utils.ts
@@ -103,6 +104,7 @@ export {};
 
 ### Exports (src/lib/)
 - contract.ts: export type CheckIn =; export type Badge =; export type RecoveryTicket =; export type UserProfile =; export type Stats =; export type DateKey = string; export type RankingEntry =; export type FriendGroup =
+- date.ts: export function toDateKey(date: Date): string; export function getTodayKey(date: Date = new Date()): string; export function parseDateKey(key: string): Date | null; export function addDays(key: string, days: number): string; export function diffDays(from: string, to: string): number; export function getWeekKey(key: string): string; export function getMonthDays(year: number, month: number): string[]; export function isFuture(key: string, now: Date = new Date()): boolean
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
 - utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
 
