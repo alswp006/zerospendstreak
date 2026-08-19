@@ -1,0 +1,116 @@
+================================================================================
+PACKET 0003: localStorage 영속 레이어 — TESTER COMPLETE ✅
+================================================================================
+
+TEST FILE: src/__tests__/packet-0003.test.ts
+TESTS: 30 total (all failing in TDD red phase)
+STATUS: ✅ Ready for Coder → Green Phase implementation
+
+================================================================================
+QUALITY GATES PASSED
+================================================================================
+
+[✓] All 30 tests present and executable (not compilation failures)
+[✓] All tests fail as expected (TDD red phase)
+[✓] Every AC has ≥1 test (P0 ACs have ≥2 tests)
+[✓] Concrete value assertions (no toBeTruthy/toBeDefined antipatterns)
+[✓] Descriptive test names matching AC + priority labels
+[✓] Error cases covered: JSON corruption, QuotaExceededError, missing keys
+[✓] Happy path: successful CRUD roundtrips for all 7 entities
+[✓] Edge cases: UUID v4 format, inviteCode regex, idempotence
+[✓] Test isolation: dynamic import, localStorage.clear() beforeEach
+[✓] Zero console.error validation test included
+[✓] No false assertions (each expect() is meaningful and specific)
+[✓] Fixed DOMException.name read-only issue (use DOMException 2nd param)
+
+================================================================================
+IMPLEMENTATION CHECKLIST FOR CODER
+================================================================================
+
+Read file: src/__tests__/packet-0003.test.ts (30 tests describe exactly what to build)
+
+Target file: src/lib/storage.ts (currently has only basic getItem/setItem/removeItem)
+
+REQUIRED EXPORTS (add to storage.ts):
+
+  □ LS_KEYS constant (7 keys: checkins, streak, recovery, badges, profile, rankCache, flags)
+  □ readCheckIns(): CheckIn[] (handles JSON corruption, returns [])
+  □ readStreak(): StreakState (returns default with all fields: 0, 0, null, 0)
+  □ readRecovery(): RecoveryWallet (returns default: 0 tickets, empty usages)
+  □ readBadges(): EarnedBadge[] (returns [])
+  □ readRankCache(): RankEntry[] (returns [])
+  □ readFlags(): AppFlags (returns { onboardingSeen: false, lastSeenBadgeId: null })
+  □ readProfile(): Profile (returns ensureProfile() if missing)
+  □ writeCheckIns(data): boolean (false on error, never throws)
+  □ writeStreak(data): boolean (false on QuotaExceededError, never throws)
+  □ writeRecovery(data): boolean (false on error, never throws)
+  □ writeBadges(data): boolean (false on error, never throws)
+  □ writeRankCache(data): boolean (false on error, never throws)
+  □ writeFlags(data): boolean (false on error, never throws)
+  □ writeProfile(data): boolean (false on error, never throws)
+  □ ensureProfile(): Profile (UUID v4 + 6-char alphanumeric inviteCode)
+
+CRITICAL PATTERNS:
+
+1. JSON Corruption Recovery:
+   - All read functions try JSON.parse()
+   - On parse error: rewrite key with JSON.stringify(default) + return default
+   - This ensures corrupted keys are auto-fixed
+
+2. Error Handling:
+   - All write functions: try { localStorage.setItem() } catch { return false; }
+   - NEVER throw, NEVER call console.error()
+   - Silent failure pattern
+
+3. ensureProfile() Idempotence:
+   - Generate UUID v4 on first call
+   - Generate 6-char alphanumeric inviteCode on first call
+   - Persist both to localStorage[LS_KEYS.profile]
+   - Subsequent calls return same profile from storage
+
+TEST DISTRIBUTION:
+  AC-1 (Corruption): 5 tests
+  AC-2 (Errors): 5 tests
+  AC-3 (ensureProfile): 4 tests
+  AC-4 (LS_KEYS): 1 test
+  AC-5 (CRUD roundtrips): 7 tests
+  AC-6 (Defaults): 6 tests
+  AC-7 (console.error): 1 test
+  AC-8-10 (Edge cases): 3 tests
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Coder reads all 30 tests in src/__tests__/packet-0003.test.ts
+2. Coder implements functions in src/lib/storage.ts
+3. Run: npx vitest run src/__tests__/packet-0003.test.ts
+4. All 30 tests should pass
+5. Verify: npx tsc --noEmit (no new errors)
+6. Verify: npx vitest run (all tests, no regression)
+
+================================================================================
+GREEN PHASE SUCCESS CRITERIA
+================================================================================
+
+□ All 30 tests pass
+□ No TypeScript errors (npx tsc --noEmit)
+□ No console.error in test output
+□ No regression in other tests (npx vitest run)
+□ storage.ts has no hardcoded fallback imports or lazy-loading patterns
+  (since LS_KEYS and all functions must export from storage.ts)
+
+================================================================================
+TEST FILE LOCATION
+================================================================================
+
+src/__tests__/packet-0003.test.ts
+
+RUN: npx vitest run src/__tests__/packet-0003.test.ts
+VIEW: 30 tests covering 4 acceptance criteria + edge cases
+
+================================================================================
+CREATED BY: Tester (TDD Red Phase)
+DATE: 2026-08-20
+STATUS: ✅ READY FOR CODER IMPLEMENTATION
+================================================================================
