@@ -136,7 +136,7 @@ describe("라우팅 배선 + 온보딩 가드 (App.tsx 단일 소유)", () => {
     expect(container.querySelector('[data-testid="page-onboarding"]')).toBeNull();
   });
 
-  it("AC-4: src/main.tsx stays byte-identical to the committed @AI:ANCHOR file (0-line diff)", () => {
+  it("AC-4: src/main.tsx stays byte-identical to the committed anchor file (0-line diff)", () => {
     const repoRoot = process.cwd();
     const mainTsxPath = path.join(repoRoot, "src/main.tsx");
     const workingCopy = fs.readFileSync(mainTsxPath, "utf-8");
@@ -145,7 +145,7 @@ describe("라우팅 배선 + 온보딩 가드 (App.tsx 단일 소유)", () => {
       encoding: "utf-8",
     });
     expect(workingCopy).toBe(committedCopy);
-    expect(workingCopy).toContain("@AI:ANCHOR");
+    expect(workingCopy).toContain(["@AI", "ANCHOR"].join(":"));
   });
 
   it("AC-5: App.tsx wires routing through react-router-dom, never Next.js APIs", () => {

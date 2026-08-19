@@ -8,8 +8,10 @@ import {
   Toast,
   Chip,
   Badge,
-  Asset,
 } from '@toss/tds-mobile';
+// Asset.ContentIcon은 아이콘을 CDN에서 받아온다 — 응답이 실패하면(오프라인·차단) 컴포넌트가
+// throw해 라우트 전체가 에러 바운더리로 떨어진다(빈 상태 하나 때문에 화면이 죽음).
+// 빈 상태는 제목+설명만으로 충분히 읽히므로 아이콘 의존을 걷어냈다.
 import { generateHapticFeedback, setClipboardText } from '@apps-in-toss/web-framework';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { Card } from '@/components/Card';
@@ -152,7 +154,6 @@ export default function Rank() {
       >
         <Spacing size={16} />
         <EmptyState
-          icon={<Asset.ContentIcon name="iconClockRegular" alt="준비 중" />}
           title="랭킹은 곧 열려요"
           description="조금만 기다려주세요"
           testId="rank-disabled"
@@ -226,7 +227,6 @@ export default function Rank() {
 
       {roomCode && !loading && !networkError && soloOnly && (
         <EmptyState
-          icon={<Asset.ContentIcon name="iconUserRegular" alt="친구 없음" />}
           title="아직 친구가 없어요"
           description="내 초대 코드를 공유해보세요"
           testId="rank-empty"

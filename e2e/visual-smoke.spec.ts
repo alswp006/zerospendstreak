@@ -11,15 +11,53 @@ import { test, expect, type Page } from "@playwright/test";
  *   2) 데이터가 필요한 화면은 seed()에서 localStorage를 채워라
  */
 const ROUTES: { path: string; name: string }[] = [
+  { path: "/onboarding", name: "onboarding" },
   { path: "/", name: "home" },
-  // { path: "/result", name: "result" },   // ← 이 앱의 라우트를 추가
-  // { path: "/settings", name: "settings" },
+  { path: "/calendar", name: "calendar" },
+  { path: "/recover", name: "recover" },
+  { path: "/stats", name: "stats" },
+  { path: "/badges", name: "badges" },
+  { path: "/rank", name: "rank" },
 ];
 
-/** 데이터가 필요한 화면용 localStorage 시드(앱에 맞게 채워라). 앱 스크립트보다 먼저 실행된다. */
+/**
+ * localStorage 시드 — 온보딩을 마친 기기 상태를 만든다.
+ * 시드가 없으면 온보딩 가드(App.tsx)가 모든 경로를 /onboarding으로 돌려보내
+ * 나머지 6개 화면을 한 장도 못 찍는다. 체크인 3건은 캘린더/통계/뱃지가
+ * 빈 상태가 아닌 실제 데이터로 그려지게 하려는 것.
+ */
 async function seed(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    // window.localStorage.setItem("MY_STORAGE_KEY", JSON.stringify({ /* ... */ }));
+    const day = 86_400_000;
+    const kst = (offsetDays: number) =>
+      new Date(Date.now() + 9 * 3600_000 - offsetDays * day).toISOString().slice(0, 10);
+
+    window.localStorage.setItem(
+      "zss.v1.profile",
+      JSON.stringify({
+        deviceUserId: "11111111-2222-4333-8444-555555555555",
+        nickname: "제로소비왕",
+        inviteCode: "K3M9QZ",
+        roomCode: null,
+        onboardedAt: 1_700_000_000_000,
+      }),
+    );
+    window.localStorage.setItem(
+      "zss.v1.checkins",
+      JSON.stringify([
+        { date: kst(0), createdAt: 1_700_000_000_000, source: "manual" },
+        { date: kst(1), createdAt: 1_700_000_000_000, source: "manual", memo: "장 안 봄" },
+        { date: kst(3), createdAt: 1_700_000_000_000, source: "recovery" },
+      ]),
+    );
+    window.localStorage.setItem(
+      "zss.v1.recovery",
+      JSON.stringify({ tickets: 1, earnedToday: 0, earnedTodayDate: kst(0), usages: [] }),
+    );
+    window.localStorage.setItem(
+      "zss.v1.badges",
+      JSON.stringify([{ id: "first_step", earnedAt: 1_700_000_000_000 }]),
+    );
   });
 }
 
