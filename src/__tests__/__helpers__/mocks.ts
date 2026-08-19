@@ -18,6 +18,27 @@ import { vi } from "vitest";
 export const mockNavigate = vi.fn();
 export const mockLocation = { pathname: "/", search: "", state: null, key: "default" };
 
+// ── react-router-dom ──
+// Registered here at module scope (Vitest hoists `vi.mock` to the top of this file),
+// so it is in place before the test file's own `import Page from "@/pages/..."` line
+// evaluates. A call-time `vi.doMock` inside mockRouter() is too late: ESM evaluates
+// every static import before the test file's body, so the page under test would
+// already hold the real `useNavigate` and every mockNavigate assertion would see 0 calls.
+//
+// `useNavigate` is always the spy — pages navigate imperatively and App.tsx uses the
+// <Navigate> element, so overriding it is safe even for files that skip mockRouter().
+// `useLocation` stays REAL: pages read `location.state` (highlightBadgeId, targetDate)
+// and App.tsx's onboarding guard branches on `location.pathname`, all of which
+// renderWithRouter drives through MemoryRouter `initialEntries`. A fixed stub
+// (pathname "/", state null) would silently blank that out.
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 // ── TDS (@toss/tds-mobile) ──
 // TDS components use CSS-in-JS + layout hooks that crash in jsdom.
 // Replace with lightweight DOM stand-ins that preserve prop-based testing.
@@ -318,24 +339,11 @@ export function mockTossRewardAd() {
 }
 
 // ── react-router-dom ──
-// Preserve actual router + override useNavigate for assertion.
+// Kept for API compatibility — the router mock is registered at the top of this file
+// (it has to be, to beat the test file's own static page import). Calling this is
+// harmless and documents intent; not calling it changes nothing.
 export function mockRouter() {
-  // vi.doMock (NOT vi.mock): this call lives inside a function, so Vitest's hoisting
-  // scanner would otherwise pick it up the moment ANY export of this file is invoked
-  // (mockTds(), mockAppsInToss(), ...) — even when mockRouter() itself is never called —
-  // silently overriding a test's own custom react-router-dom mock with the static
-  // mockLocation stub. vi.doMock is the documented non-hoisted variant, so it only takes
-  // effect when this function actually runs.
-  vi.doMock("react-router-dom", async () => {
-    const actual = await vi.importActual<typeof import("react-router-dom")>(
-      "react-router-dom",
-    );
-    return {
-      ...actual,
-      useNavigate: () => mockNavigate,
-      useLocation: () => mockLocation,
-    };
-  });
+  /* no-op — see the vi.mock("react-router-dom") registration above */
 }
 
 // ── Convenience: mock everything ──

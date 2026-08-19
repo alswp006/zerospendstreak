@@ -293,6 +293,7 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - 0015: 라우팅 배선 + 온보딩 가드 (App.tsx 단일 소유) (files: src/App.tsx)
 - 0010: 캘린더 화면 /calendar (files: src/pages/Calendar.tsx)
 - 0012: 통계 화면 /stats (files: src/pages/Stats.tsx)
+- 0013: 뱃지 컬렉션 화면 /badges (files: src/pages/Badges.tsx)
 
 ## Available exports from existing files
 // src/App.tsx
@@ -304,9 +305,6 @@ export function AdSlot({ adGroupId, className, variant, theme }: AdSlotProps) {
 // src/components/Amount.tsx
 export function Amount({
 
-// src/components/BannerSection.tsx
-export function BannerSection({ gap = 24 }: BannerSectionProps = {}) {
-
 // src/components/BottomCTA.tsx
 export function SubmitFooter({
 export function ButtonStack({
@@ -316,9 +314,6 @@ export function Card({
 
 // src/components/CountUp.tsx
 export function CountUp({
-
-// src/components/EmptyState.tsx
-export function EmptyState({
 
 // src/components/FloatingTabBar.tsx
 export type TabItem = {
@@ -350,10 +345,6 @@ export function TossPurchase({
 // src/components/TossRewardAd.tsx
 export function TossRewardAd({
 
-// src/hooks/useBadgeToast.ts
-export interface UseBadgeToastResult {
-export function useBadgeToast(earned: EarnedBadge[]): UseBadgeToastResult {
-
 // src/hooks/useBadges.ts
 export interface UseBadgesResult {
 export function useBadges(): UseBadgesResult {
@@ -368,7 +359,14 @@ export interface UseProfileResult {
 export function useProfile(): UseProfileResult {
 
 // src/hooks/useRecovery.ts
-export type EarnT
+export type EarnTicketResult =
+export type UseTicketResult = { ok: true } | { ok: false; reason: 'NO_TICKETS' | 'STORAGE_FULL' };
+export interface UseRecoveryResult {
+export function useRecovery(): UseRecoveryResult {
+
+// src/lib/badgeDefs.ts
+export const BADGE_DEFS: readonly BadgeDef[] = [
+export function getBadgeDef(id: string): B
 
 ## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
 
