@@ -210,8 +210,8 @@ expo
     TossPurchase.tsx
     TossRewardAd.tsx
   hooks/
+    useCheckIns.ts
   lib/
-    __tests__/
     badgeDefs.ts
     contract.ts
     date.ts
@@ -316,6 +316,10 @@ export function TossPurchase({
 // src/components/TossRewardAd.tsx
 export function TossRewardAd({
 
+// src/hooks/useCheckIns.ts
+export interface UseCheckInsResult {
+export function useCheckIns(): UseCheckInsResult {
+
 // src/lib/badgeDefs.ts
 export const BADGE_DEFS: readonly BadgeDef[] = [
 export function getBadgeDef(id: string): BadgeDef | undefined {
@@ -328,8 +332,6 @@ export type BadgeDef = { id: string; name: string; description: string; icon: st
 export type BADGE_DEFS = readonly BadgeDef[];
 export type formatDateKstFn = (date: Date | string) => string;
 export type toKstDateFn = (date?: Date) => Date;
-export type getCheckInsFn = (userId: string) => CheckIn[];
-export type addCheckInFn = (userId: string, date: string)
 
 ## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
 

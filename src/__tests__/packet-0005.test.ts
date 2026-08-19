@@ -165,13 +165,17 @@ describe("Packet 0005: 상태 훅 — useCheckIns", () => {
       expect(storageBefore).toHaveLength(1);
 
       // Verify storage.set catch behavior with spy
-      const originalSetItem = localStorage.setItem;
+      const originalSetItem = Storage.prototype.setItem;
       let throwOnNext = false;
-      const setItemSpy = vi.spyOn(localStorage, "setItem").mockImplementation((key: string, value: string) => {
+      const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+        this: Storage,
+        key: string,
+        value: string
+      ) {
         if (key === LS_KEYS.checkins && throwOnNext) {
           throw new Error("QuotaExceededError");
         }
-        originalSetItem.call(localStorage, key, value);
+        originalSetItem.call(this, key, value);
       });
 
       // Attempt to write with failure
@@ -207,7 +211,7 @@ describe("Packet 0005: 상태 훅 — useCheckIns", () => {
       ];
 
       // Mock setItem to throw
-      const setItemSpy = vi.spyOn(localStorage, "setItem").mockImplementationOnce(() => {
+      const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => {
         throw new Error("QuotaExceededError");
       });
 
