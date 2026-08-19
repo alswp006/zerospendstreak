@@ -215,6 +215,7 @@ expo
     badgeDefs.ts
     contract.ts
     date.ts
+    engine.ts
     storage.ts
     types.ts
     utils.ts
@@ -232,6 +233,7 @@ expo
 - badgeDefs.ts: export const BADGE_DEFS: readonly BadgeDef[] = [; export function getBadgeDef(id: string): BadgeDef | undefined
 - contract.ts: export type CheckIn =; export type Badge =; export type Profile =; export type BadgeDef =; export type BADGE_DEFS = readonly BadgeDef[]; export type formatDateKstFn = (date: Date | string) => string; export type toKstDateFn = (date?: Date) => Date; export type getCheckInsFn = (userId: string) => CheckIn[]
 - date.ts: export function todayKST(): string; export function addDays(dateStr: string, days: number): string; export function diffDays(a: string, b: string): number; export function isValidDateStr(dateStr: string): boolean; export function formatKorean(dateStr: string): string; export function weekdayKey(dateStr: string): number; export function monthMatrix(year: number, month: number): (string | null)[]
+- engine.ts: export function calcStreak(checkins: CheckIn[], today: string): StreakState; export function calcRate( checkins: CheckIn[], today: string, windowDays: number, firstCheckInDate?: string ):; export function calcWeekdayRates(checkins: CheckIn[], today: string): WeekdayRates; export function calcWeeklyTrend(checkins: CheckIn[], today: string):; export function evaluateBadges( currentStreak: number, alreadyEarned: EarnedBadge[], badgeDefs: readonly BadgeDef[], tot; export function canRecover( targetDate: string, today: string, usages: RecoveryUsage[] ):
 - storage.ts: export const LS_KEYS =; export function readCheckIns(): CheckIn[]; export function writeCheckIns(value: CheckIn[]): boolean; export function readStreak(): StreakState; export function writeStreak(value: StreakState): boolean; export function readRecovery(): RecoveryWallet; export function writeRecovery(value: RecoveryWallet): boolean; export function readBadges(): EarnedBadge[]
 - types.ts: export type CheckInSource = 'manual' | 'recovery'; export interface CheckIn; export interface StreakState; export interface RecoveryUsage; export interface RecoveryWallet; export type BadgeId = | 'first_step' // 총 1일 | 'streak_3' // 연속 3일 | 'streak_7' // 연속 7일 | 'streak_14' // 연속 14일 | 'stre; export interface BadgeDef; export interface EarnedBadge
 - utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
@@ -254,6 +256,7 @@ expo
 
 ### Module Dependencies (import graph)
   lib/badgeDefs.ts → imports: lib/types
+  lib/engine.ts → imports: lib/types, lib/date
   lib/storage.ts → imports: lib/types, lib/date
 CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
 
@@ -261,6 +264,7 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - 0001: 엔티티 타입 + RouteState 정의 (files: src/lib/types.ts)
 - 0002: KST 날짜 유틸 + BadgeDef 테이블 (files: src/lib/date.ts, src/lib/badgeDefs.ts, src/lib/__tests__/date.test.ts)
 - 0003: localStorage 영속 레이어 (CRUD 전용) (files: src/lib/storage.ts)
+- 0004: 스트릭·통계·뱃지 순수 계산 엔진 (files: src/lib/engine.ts, src/lib/__tests__/engine.test.ts)
 
 ## Available exports from existing files
 // src/App.tsx
