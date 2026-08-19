@@ -198,7 +198,7 @@ export default function Home() {
 
       <Spacing size={24} />
       <AdSlot adGroupId="home-recent-bottom" />
-      <Spacing size={16} />
+      <Spacing size={80} />
 
       <BottomSheet open={memoOpen} onClose={closeMemoSheet}>
         <div style={{ padding: 16 }}>
