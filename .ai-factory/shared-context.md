@@ -210,7 +210,10 @@ expo
     TossPurchase.tsx
     TossRewardAd.tsx
   hooks/
+    useBadges.ts
     useCheckIns.ts
+    useProfile.ts
+    useRecovery.ts
   lib/
     badgeDefs.ts
     contract.ts
@@ -265,6 +268,7 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - 0002: KST 날짜 유틸 + BadgeDef 테이블 (files: src/lib/date.ts, src/lib/badgeDefs.ts, src/lib/__tests__/date.test.ts)
 - 0003: localStorage 영속 레이어 (CRUD 전용) (files: src/lib/storage.ts)
 - 0004: 스트릭·통계·뱃지 순수 계산 엔진 (files: src/lib/engine.ts, src/lib/__tests__/engine.test.ts)
+- 0006: 상태 훅 — useBadges / useRecovery / useProfile (files: src/hooks/useBadges.ts, src/hooks/useRecovery.ts, src/hooks/useProfile.ts)
 
 ## Available exports from existing files
 // src/App.tsx
@@ -316,22 +320,28 @@ export function TossPurchase({
 // src/components/TossRewardAd.tsx
 export function TossRewardAd({
 
+// src/hooks/useBadges.ts
+export interface UseBadgesResult {
+export function useBadges(): UseBadgesResult {
+
 // src/hooks/useCheckIns.ts
 export interface UseCheckInsResult {
 export function useCheckIns(): UseCheckInsResult {
 
+// src/hooks/useProfile.ts
+export type SetNicknameResult = { ok: true } | { ok: false; reason: 'INVALID_NICKNAME' | 'STORAGE_FULL' };
+export interface UseProfileResult {
+export function useProfile(): UseProfileResult {
+
+// src/hooks/useRecovery.ts
+export type EarnTicketResult =
+export type UseTicketResult = { ok: true } | { ok: false; reason: 'NO_TICKETS' | 'STORAGE_FULL' };
+export interface UseRecoveryResult {
+export function useRecovery(): UseRecoveryResult {
+
 // src/lib/badgeDefs.ts
 export const BADGE_DEFS: readonly BadgeDef[] = [
-export function getBadgeDef(id: string): BadgeDef | undefined {
-
-// src/lib/contract.ts
-export type CheckIn = { id: string; userId: string; date: string; createdAt: string };
-export type Badge = { id: string; userId: string; badgeId: string; unlockedAt: string };
-export type Profile = { id: string; name: string; avatarUrl?: string; joinedAt: string };
-export type BadgeDef = { id: string; name: string; description: string; icon: string; condition: string };
-export type BADGE_DEFS = readonly BadgeDef[];
-export type formatDateKstFn = (date: Date | string) => string;
-export type toKstDateFn = (date?: Date) => Date;
+export function getBadgeDef(id: string): B
 
 ## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
 
