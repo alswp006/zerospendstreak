@@ -41,10 +41,10 @@ describe("캘린더 화면 /calendar", () => {
   it("AC-1[P0]: 2026-08 선택 시 8월 1~31일 셀이 모두 렌더되고 각 셀 크기가 44x44 이상이다", () => {
     renderWithRouter(React.createElement(Calendar));
 
-    const dayCells = screen.getAllByTestId(/^day-2026-08-\d{2}$/);
+    const dayCells = screen.getAllByTestId(/^cal-cell-2026-08-\d{2}$/);
     expect(dayCells).toHaveLength(31);
 
-    const firstCell = screen.getByTestId("day-2026-08-01");
+    const firstCell = screen.getByTestId("cal-cell-2026-08-01");
     const computed = getComputedStyle(firstCell);
     expect(parseInt(computed.minHeight, 10)).toBeGreaterThanOrEqual(44);
     expect(parseInt(computed.minWidth, 10)).toBeGreaterThanOrEqual(44);
@@ -57,10 +57,11 @@ describe("캘린더 화면 /calendar", () => {
     );
     renderWithRouter(React.createElement(Calendar));
 
-    const checkedCell = screen.getByTestId("day-2026-08-20");
+    const checkedCell = screen.getByTestId("cal-cell-2026-08-20");
     expect(checkedCell.style.backgroundColor).toBe("var(--tds-color-blue50)");
+    expect(checkedCell).toHaveAttribute("data-state", "success");
 
-    const uncheckedCell = screen.getByTestId("day-2026-08-05");
+    const uncheckedCell = screen.getByTestId("cal-cell-2026-08-05");
     expect(["var(--tds-color-grey50)", "var(--tds-color-background)"]).toContain(
       uncheckedCell.style.backgroundColor
     );
@@ -70,7 +71,7 @@ describe("캘린더 화면 /calendar", () => {
     setCheckIns([], "2026-08-20");
     renderWithRouter(React.createElement(Calendar));
 
-    const recoverableCell = screen.getByTestId("day-2026-08-15");
+    const recoverableCell = screen.getByTestId("cal-cell-2026-08-15");
     fireEvent.click(recoverableCell);
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -88,7 +89,7 @@ describe("캘린더 화면 /calendar", () => {
     setCheckIns([], "2026-08-20");
     renderWithRouter(React.createElement(Calendar));
 
-    const tooOldCell = screen.getByTestId("day-2026-08-01");
+    const tooOldCell = screen.getByTestId("cal-cell-2026-08-01");
     fireEvent.click(tooOldCell);
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -116,7 +117,25 @@ describe("캘린더 화면 /calendar", () => {
 
     expect(julChip).toHaveAttribute("aria-pressed", "true");
     expect(augChip).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByTestId("day-2026-07-01")).toBeInTheDocument();
-    expect(screen.queryByTestId("day-2026-08-01")).not.toBeInTheDocument();
+    expect(screen.getByTestId("cal-cell-2026-07-01")).toBeInTheDocument();
+    expect(screen.queryByTestId("cal-cell-2026-08-01")).not.toBeInTheDocument();
+  });
+
+  it("AC-6[P0]: cal-prev/cal-next로 월 이동하고 헤더가 'YYYY년 M월'로 표시된다", () => {
+    setCheckIns([], "2026-08-20");
+    renderWithRouter(React.createElement(Calendar));
+
+    expect(screen.getByText("2026년 8월")).toBeInTheDocument();
+    expect(screen.getByTestId("cal-next")).toBeDisabled();
+
+    fireEvent.click(screen.getByTestId("cal-prev"));
+
+    expect(screen.getByText("2026년 7월")).toBeInTheDocument();
+    expect(screen.getByTestId("cal-next")).not.toBeDisabled();
+    expect(screen.getByTestId("cal-cell-2026-07-01")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("cal-next"));
+
+    expect(screen.getByText("2026년 8월")).toBeInTheDocument();
   });
 });

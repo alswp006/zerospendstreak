@@ -87,6 +87,20 @@ export default function Calendar() {
     navigate('/recover', { state: { targetDate } as RouteState['/recover'] });
   }
 
+  const isCurrentMonth =
+    cursor.year === splitYearMonth(today).year && cursor.month === splitYearMonth(today).month;
+
+  function goPrevMonth() {
+    safeHaptic();
+    setCursor(({ year, month }) => shiftMonth(year, month, -1));
+  }
+
+  function goNextMonth() {
+    if (isCurrentMonth) return;
+    safeHaptic();
+    setCursor(({ year, month }) => shiftMonth(year, month, 1));
+  }
+
   return (
     <ScreenScaffold
       top={
@@ -97,6 +111,29 @@ export default function Calendar() {
       }
       bottom={<FloatingTabBar items={TAB_ITEMS} />}
     >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Button
+          variant="weak"
+          data-testid="cal-prev"
+          style={{ minHeight: 44, minWidth: 44 }}
+          onClick={goPrevMonth}
+        >
+          이전
+        </Button>
+        <Paragraph.Text typography="t4">{`${cursor.year}년 ${cursor.month}월`}</Paragraph.Text>
+        <Button
+          variant="weak"
+          data-testid="cal-next"
+          disabled={isCurrentMonth}
+          style={{ minHeight: 44, minWidth: 44 }}
+          onClick={goNextMonth}
+        >
+          다음
+        </Button>
+      </div>
+
+      <Spacing size={12} />
+
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
         {monthOptions.map(({ year, month }) => {
           const isSelected = year === cursor.year && month === cursor.month;
@@ -138,6 +175,13 @@ export default function Calendar() {
               }
               const entry = checkedDates.get(date);
               const isToday = date === today;
+              const state = entry
+                ? entry.source === 'recovery'
+                  ? 'recovered'
+                  : 'success'
+                : date > today
+                  ? 'future'
+                  : 'miss';
               const backgroundColor = entry
                 ? 'var(--tds-color-blue50)'
                 : isToday
@@ -147,7 +191,8 @@ export default function Calendar() {
                 <button
                   key={date}
                   type="button"
-                  data-testid={`day-${date}`}
+                  data-testid={`cal-cell-${date}`}
+                  data-state={state}
                   aria-label={`${Number(date.slice(8, 10))}일 ${entry ? '기록됨' : '기록 없음'}`}
                   onClick={() => handleCellClick(date)}
                   style={{
