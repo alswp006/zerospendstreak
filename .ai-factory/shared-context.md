@@ -232,7 +232,7 @@ expo
 - badgeDefs.ts: export const BADGE_DEFS: readonly BadgeDef[] = [; export function getBadgeDef(id: string): BadgeDef | undefined
 - contract.ts: export type CheckIn =; export type Badge =; export type Profile =; export type BadgeDef =; export type BADGE_DEFS = readonly BadgeDef[]; export type formatDateKstFn = (date: Date | string) => string; export type toKstDateFn = (date?: Date) => Date; export type getCheckInsFn = (userId: string) => CheckIn[]
 - date.ts: export function todayKST(): string; export function addDays(dateStr: string, days: number): string; export function diffDays(a: string, b: string): number; export function isValidDateStr(dateStr: string): boolean; export function formatKorean(dateStr: string): string; export function weekdayKey(dateStr: string): number; export function monthMatrix(year: number, month: number): (string | null)[]
-- storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
+- storage.ts: export const LS_KEYS =; export function readCheckIns(): CheckIn[]; export function writeCheckIns(value: CheckIn[]): boolean; export function readStreak(): StreakState; export function writeStreak(value: StreakState): boolean; export function readRecovery(): RecoveryWallet; export function writeRecovery(value: RecoveryWallet): boolean; export function readBadges(): EarnedBadge[]
 - types.ts: export type CheckInSource = 'manual' | 'recovery'; export interface CheckIn; export interface StreakState; export interface RecoveryUsage; export interface RecoveryWallet; export type BadgeId = | 'first_step' // 총 1일 | 'streak_3' // 연속 3일 | 'streak_7' // 연속 7일 | 'streak_14' // 연속 14일 | 'stre; export interface BadgeDef; export interface EarnedBadge
 - utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
 
@@ -254,84 +254,10 @@ expo
 
 ### Module Dependencies (import graph)
   lib/badgeDefs.ts → imports: lib/types
+  lib/storage.ts → imports: lib/types, lib/date
 CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
 
 ## Already Implemented (do NOT duplicate or overwrite)
 - 0001: 엔티티 타입 + RouteState 정의 (files: src/lib/types.ts)
 - 0002: KST 날짜 유틸 + BadgeDef 테이블 (files: src/lib/date.ts, src/lib/badgeDefs.ts, src/lib/__tests__/date.test.ts)
-
-## Available exports from existing files
-// src/App.tsx
-export default function App() {
-
-// src/components/AdSlot.tsx
-export function AdSlot({ adGroupId, className, variant, theme }: AdSlotProps) {
-
-// src/components/Amount.tsx
-export function Amount({
-
-// src/components/BottomCTA.tsx
-export function SubmitFooter({
-export function ButtonStack({
-
-// src/components/Card.tsx
-export function Card({
-
-// src/components/CountUp.tsx
-export function CountUp({
-
-// src/components/FloatingTabBar.tsx
-export type TabItem = {
-export function FloatingTabBar({ items }: { items: TabItem[] }) {
-
-// src/components/MiniBar.tsx
-export function MiniBar({
-
-// src/components/PageShell.tsx
-export function PageShell({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-
-// src/components/ScreenScaffold.tsx
-export function ScreenScaffold({
-
-// src/components/Sparkline.tsx
-export function Sparkline({
-
-// src/components/StateView.tsx
-export function EmptyState({
-export function LoadingState({
-
-// src/components/SummaryHero.tsx
-export function SummaryHero({
-
-// src/components/TossPurchase.tsx
-export interface TossPurchaseResult {
-export function TossPurchase({
-
-// src/components/TossRewardAd.tsx
-export function TossRewardAd({
-
-// src/lib/badgeDefs.ts
-export const BADGE_DEFS: readonly BadgeDef[] = [
-export function getBadgeDef(id: string): BadgeDef | undefined {
-
-// src/lib/contract.ts
-export type CheckIn = { id: string; userId: string; date: string; createdAt: string };
-export type Badge = { id: string; userId: string; badgeId: string; unlockedAt: string };
-export type Profile = { id: string; name: string; avatarUrl?: string; joinedAt: string };
-export type BadgeDef = { id: string; name: string; description: string; icon: string; condition: string };
-export type BADGE_DEFS = readonly BadgeDef[];
-export type formatDateKstFn = (date: Date | string) => string;
-export type toKstDateFn = (date?: Date) => Date;
-export type getCheckInsFn = (userId: string) => CheckIn[];
-export type addCheckInFn = (userId: string, date: string)
-
-## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
-
-Available topics: deploy(1), general(6), testing(1), ui(4)
-
-Key lessons (verify against actual code before applying):
-- [deploy] 빌드 불안정 — 의존성 버전 고정, 빌드 전 typecheck 필수 (60%)
-- [general] 정책·기능 제거형 리팩터링은 화면과 도메인 로직 레이어에서만 수행하고, package.json의 플랫폼 필수 의존성(디자인 시스템·플랫폼 SDK·프레임워크 코어)은 어떤 경우에도 삭제하지 말 것 — 필수 패키지 화이트리스트를 빌드 전 가드로 검증하라. (60%)
-- [general] 공용 기반 모듈(상수·저장소·계산 유틸)이 실제로 머지되기 전에는 이를 import하는 화면·훅 패킷을 머지하지 말고, 모든 머지 게이트에 타입체크와 프로덕션 빌드 통과(미해결 import 0건)를 필수로 걸어라. (60%)
-- [ui] 온보딩/인증 가드는 현재 경로가 목적지 경로와 같으면 리다이렉트를 건너뛰고, 상태 로딩 중에는 리다이렉트를 보류하라 — 그렇지 않으면 무한 루프나 초기 크래시로 전 라우트가 타임아웃된다. (60%)
-- [testing] 화면 구현 패킷을 돌리기 전에 플랫폼 SDK·결제/광고 컴포넌트·UI 라이브러리·스토리지 API를 감싼 공유 테스트 목 하네스를 먼저 확정하고, 에이전트가 임시 디버그 테스트 파일을 만들지 못하게 막아라. (60%)
+- 0003: localStorage 영속 레이어 (CRUD 전용) (files: src/lib/storage.ts)
