@@ -296,9 +296,7 @@ describe("Entity Types & RouteState (Packet 0001)", () => {
       ];
 
       requiredExports.forEach((exportName) => {
-        expect(types[exportName as keyof typeof types]).toBeDefined(
-          `Type ${exportName} should be exported from @/lib/types`
-        );
+        expect(types[exportName as keyof typeof types]).toBeDefined();
       });
     });
   });

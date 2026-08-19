@@ -5,6 +5,8 @@
  * 타입을 그대로 가정해도 된다. 추측이 어긋나 병합에서 무너지는 것을 막기 위한 파일이다.
  */
 
+import type { ReactNode } from 'react';
+
 export type CheckIn = { id: string; userId: string; date: string; createdAt: string };
 
 export type Badge = { id: string; userId: string; badgeId: string; unlockedAt: string };
