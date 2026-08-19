@@ -1,15 +1,27 @@
 import { useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Top, Paragraph, Spacing, ListRow, Chip, Toast } from '@toss/tds-mobile';
+import { useLocation } from 'react-router-dom';
+import { Top, Paragraph, Spacing, ListRow, Chip, Toast, Asset, Button } from '@toss/tds-mobile';
 import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { Card } from '@/components/Card';
 import { SubmitFooter } from '@/components/BottomCTA';
 import { EmptyState } from '@/components/StateView';
+import { TossRewardAd } from '@/components/TossRewardAd';
 import { useRecovery } from '@/hooks/useRecovery';
 import { useCheckIns } from '@/hooks/useCheckIns';
 import { canRecover } from '@/lib/engine';
 import { addDays, formatKorean } from '@/lib/date';
+import type { RouteState } from '@/lib/types';
+
+const AD_SLOT_ID = (import.meta.env.VITE_TOSS_AD_SLOT_ID as string | undefined) ?? 'recovery-ticket';
+
+function fireHaptic(type: 'success' | 'tickWeak') {
+  try {
+    Promise.resolve(generateHapticFeedback({ type })).catch(() => {});
+  } catch {
+    /* WebView 밖 — 무시 */
+  }
+}
 
 /** 오늘을 제외한 최근 7일 중 체크인이 없고 아직 복구하지 않은 날짜 목록. */
 function findRecoverableDates(
@@ -28,11 +40,11 @@ function findRecoverableDates(
 }
 
 export default function Recover() {
-  const navigate = useNavigate();
   const location = useLocation();
-  const initialTarget = (location.state as { targetDate?: string } | null)?.targetDate ?? null;
+  const routeState = (location.state as RouteState['/recover']) ?? undefined;
+  const initialTarget = routeState?.targetDate ?? null;
 
-  const { wallet, useTicket } = useRecovery();
+  const { wallet, canEarn, earnTicket, useTicket } = useRecovery();
   const { checkins, today, addCheckIn } = useCheckIns();
   const [selected, setSelected] = useState<string | null>(initialTarget);
   const [toast, setToast] = useState<string | null>(null);
@@ -44,6 +56,7 @@ export default function Recover() {
   );
 
   const canSubmit = wallet.tickets > 0 && selected !== null && recoverable.includes(selected);
+  const alreadyEarnedToday = wallet.earnedToday >= 1 && wallet.earnedTodayDate === today;
 
   async function handleRecover() {
     if (selected === null) return;
@@ -60,12 +73,25 @@ export default function Recover() {
       return;
     }
 
-    try {
-      Promise.resolve(generateHapticFeedback({ type: 'success' })).catch(() => {});
-    } catch {
-      /* WebView 밖 — 무시 */
+    fireHaptic('success');
+    setToast('스트릭을 복구했어요');
+  }
+
+  function handleEarnTicket() {
+    const earned = earnTicket();
+    if (!earned.ok) {
+      if (earned.reason === 'MAX_TICKETS') {
+        setToast('복구권은 최대 3개까지 가질 수 있어요');
+      } else if (earned.reason === 'ALREADY_EARNED_TODAY') {
+        setToast('오늘은 이미 받았어요');
+      } else {
+        setToast('저장 공간이 부족해요');
+      }
+      return;
     }
-    navigate('/calendar', { state: { focusDate: selected }, replace: true });
+
+    fireHaptic('tickWeak');
+    setToast('복구권을 받았어요');
   }
 
   return (
@@ -97,6 +123,7 @@ export default function Recover() {
 
       {recoverable.length === 0 ? (
         <EmptyState
+          icon={<Asset.ContentIcon name="iconCalendarCheckRegular" alt="복구할 날 없음" />}
           title="복구할 날이 없어요"
           description="최근 7일은 빠짐없이 기록했어요"
           testId="recover-empty"
@@ -113,6 +140,24 @@ export default function Recover() {
           ))}
         </Card>
       )}
+
+      <Spacing size={24} />
+
+      <TossRewardAd
+        slotId={AD_SLOT_ID}
+        description="광고를 보면 복구권을 하나 받을 수 있어요"
+        buttonText="광고 보고 복구권 받기"
+      >
+        <Button variant="weak" display="block" disabled={!canEarn} onClick={handleEarnTicket}>
+          광고 보고 복구권 받기
+        </Button>
+      </TossRewardAd>
+      {alreadyEarnedToday ? (
+        <>
+          <Spacing size={8} />
+          <Paragraph.Text typography="st13">오늘은 이미 받았어요</Paragraph.Text>
+        </>
+      ) : null}
 
       <Spacing size={24} />
 

@@ -26,9 +26,19 @@ export function mockTds() {
     Button: ({ children, onClick, ...props }: any) =>
       React.createElement("button", { onClick, ...props }, children),
 
+    // Real TDS ListRow renders `contents`/`left`/`right` as slot props (React nodes),
+    // not DOM attributes — spreading them into ...props would stringify them to
+    // "[object Object]" and hide any text inside from getByText. Render as children instead.
     ListRow: Object.assign(
-      ({ children, onClick, ...props }: any) =>
-        React.createElement("div", { onClick, role: "listitem", ...props }, children),
+      ({ children, onClick, contents, left, right, ...props }: any) =>
+        React.createElement(
+          "div",
+          { onClick, role: "listitem", ...props },
+          left,
+          contents,
+          right,
+          children,
+        ),
       {
         Text: ({ children }: any) => React.createElement("span", null, children),
         Texts: ({ top, bottom, type }: any) =>
@@ -309,7 +319,13 @@ export function mockTossRewardAd() {
 // ── react-router-dom ──
 // Preserve actual router + override useNavigate for assertion.
 export function mockRouter() {
-  vi.mock("react-router-dom", async () => {
+  // vi.doMock (NOT vi.mock): this call lives inside a function, so Vitest's hoisting
+  // scanner would otherwise pick it up the moment ANY export of this file is invoked
+  // (mockTds(), mockAppsInToss(), ...) — even when mockRouter() itself is never called —
+  // silently overriding a test's own custom react-router-dom mock with the static
+  // mockLocation stub. vi.doMock is the documented non-hoisted variant, so it only takes
+  // effect when this function actually runs.
+  vi.doMock("react-router-dom", async () => {
     const actual = await vi.importActual<typeof import("react-router-dom")>(
       "react-router-dom",
     );
