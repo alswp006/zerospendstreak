@@ -249,6 +249,7 @@ expo
     Recover.tsx
     Stats.tsx
     __TdsGallery.tsx
+    __tests__/
   styles/
     globals.css
     reward-ad.css
@@ -290,7 +291,7 @@ expo
   lib/storage.ts → imports: lib/types, lib/date
   pages/Badges.tsx → imports: components/ScreenScaffold, components/Card, components/FloatingTabBar, hooks/useBadges, lib/badgeDefs, lib/types
   pages/Calendar.tsx → imports: components/ScreenScaffold, components/Card, components/StateView, components/FloatingTabBar, hooks/useCheckIns, lib/date, lib/types
-  pages/Home.tsx → imports: components/ScreenScaffold, components/SummaryHero, components/CountUp, components/Amount, components/Card, components/EmptySta...
+  pages/Home.tsx → imports: components/ScreenScaffold, components/SummaryHero, components/CountUp, components/Amount, components/Card, comp...
 CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
 
 ## Already Implemented (do NOT duplicate or overwrite)
@@ -308,6 +309,10 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - 0015: 라우팅 배선 + 온보딩 가드 (App.tsx 단일 소유) (files: src/App.tsx)
 - 0016: 광고 배치 컴포넌트 + 검수 컴플라이언스 폴리시 (files: src/components/BannerSection.tsx, src/hooks/useBadgeToast.ts, src/components/EmptyState.tsx)
 - heal-1-01: 0005 완성 — useCheckIns 훅 계약 확정(검증 순서·롤백·스트릭 캐시) (files: src/hooks/useCheckIns.ts, src/hooks/__tests__/useCheckIns.test.ts)
+- heal-1-02: 0009 완성 — 홈 화면 / (체크인 + 스트릭 히어로 + 메모 시트) (files: src/pages/Home.tsx, src/pages/__tests__/Home.test.tsx)
+
+## TDD 상태
+⚠️ TDD 테스트 파일 자동 작성에 실패했습니다. 소스 코드를 작성하기 전에 `src/__tests__/packet-XXXX.test.ts` 파일에 AC 기반 테스트를 먼저 작성하세요 (TDD red phase). 테스트 작성 후 구현하세요.
 
 ## Available exports from existing files
 // src/App.tsx
