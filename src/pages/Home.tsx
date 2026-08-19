@@ -1,73 +1,240 @@
-import { Top, Paragraph, Spacing, ListRow, Button } from '@toss/tds-mobile';
-import { useNavigate } from 'react-router-dom';
-import { ScreenScaffold } from '../components/ScreenScaffold';
-import { SummaryHero } from '../components/SummaryHero';
-import { Card } from '../components/Card';
+import { useEffect, useState } from 'react';
+import { Top, Paragraph, Spacing, Chip, BottomSheet, TextField, Toast, Button, ListRow } from '@toss/tds-mobile';
+import { generateHapticFeedback } from '@apps-in-toss/web-framework';
+import { ScreenScaffold } from '@/components/ScreenScaffold';
+import { SummaryHero } from '@/components/SummaryHero';
+import { CountUp } from '@/components/CountUp';
+import { Amount } from '@/components/Amount';
+import { Card } from '@/components/Card';
+import { EmptyState } from '@/components/EmptyState';
+import { LoadingState } from '@/components/StateView';
+import { FloatingTabBar } from '@/components/FloatingTabBar';
+import { AdSlot } from '@/components/AdSlot';
+import { useCheckIns } from '@/hooks/useCheckIns';
+import { addDays, formatKorean } from '@/lib/date';
+import type { AddCheckInResult } from '@/lib/types';
 
-/**
- * Golden Home page — 대시보드/탭-루트 골든 레퍼런스.
- *
- * 다른 페이지를 쓸 때 이 패턴을 모방하라:
- * - ScreenScaffold로 감싼다(raw fragment 골격 금지) — safe-area + 100dvh 자동 처리.
- * - 화면 최상단에 SummaryHero로 시각 앵커를 만든다('휑함'의 가장 큰 원인은 앵커 부재).
- *   데이터가 있으면 value에 <Amount value={n} unit="원" typography="t1" />로 핵심 숫자를 크게 박아라.
- * - 1차 진입 액션은 SummaryHero 카드 내부 버튼(display="block", 전체폭)에 둔다.
- *   → 화면 중앙 부유/좌측 글자폭 버튼 금지. 하단 TabBar가 있으면 SubmitFooter와 겹치므로 카드 안에.
- * - 핵심 정보는 raw <div>가 아니라 Card로 묶어 위계를 만든다.
- * - 하단 탭이 필요하면(2~5탭): bottom={<FloatingTabBar items={[{label,path}...]} />}.
- *   ('TDS TabBar'는 존재하지 않는다 — 직접 만들지 말고 FloatingTabBar를 써라.)
- * - 카피는 CLAUDE.md "카피 규칙 — AI 냄새 금지"를 따른다: 기능 나열식 홍보 문구·상투구·
- *   generic 버튼("시작하기") 금지. 이 파일의 예시 문구도 앱 맥락에 맞게 교체 대상이다.
- *
- * Scaffold tokens (replaced by scaffold-toss.ts at project creation):
- *   ZeroSpendStreak -> the app's display name
- *   하루 지출 0원에 도전하고 연속 성공일수를 기록하며 친구와 순위를 겨루는 무지출 챌린지 스트릭 앱    -> the one-line description
- */
-
-// ⚠ 이 목록은 골격 예시다 — 앱의 실제 콘텐츠(핵심 지표·최근 기록·바로가기)로 반드시 교체하라.
-// '간편한 사용/빠른 처리' 같은 기능 나열식 홍보 문구는 카피 규칙(CLAUDE.md "AI 냄새 금지") 위반이다.
-// 사용자가 이 화면에서 실제로 확인할 정보를 넣어라 — 아래처럼 데이터가 사는 행으로.
-const HIGHLIGHTS = [
-  { title: '오늘', description: '아직 기록이 없어요' },
-  { title: '이번 주', description: '기록 3건 · 평균 12분' },
+const TAB_ITEMS = [
+  { label: '홈', path: '/' },
+  { label: '달력', path: '/calendar' },
+  { label: '통계', path: '/stats' },
+  { label: '뱃지', path: '/badges' },
+  { label: '랭킹', path: '/rank' },
 ];
 
+const MEMO_MAX_LENGTH = 50;
+const TOAST_DURATION_MS = 2200;
+
+type ToastKind = 'success' | 'duplicate' | 'storage_full' | 'invalid' | null;
+
+function fireHaptic(type: 'success' | 'tickWeak') {
+  try {
+    Promise.resolve(generateHapticFeedback({ type })).catch(() => {});
+  } catch {
+    /* WebView 밖(브라우저/검수자 PC/jsdom)에서는 throw — 무시 */
+  }
+}
+
 export default function Home() {
-  const navigate = useNavigate();
+  const { checkins, streak, isLoading, addCheckIn, hasCheckIn, getCheckInsInRange, today } = useCheckIns();
+
+  const [toastKind, setToastKind] = useState<ToastKind>(null);
+  const [memoOpen, setMemoOpen] = useState(false);
+  const [memo, setMemo] = useState('');
+
+  useEffect(() => {
+    if (!toastKind) return;
+    const timer = setTimeout(() => setToastKind(null), TOAST_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [toastKind]);
+
+  const checkedToday = hasCheckIn(today);
+
+  function applyResult(result: AddCheckInResult) {
+    if (result.ok) {
+      setToastKind('success');
+      return;
+    }
+    if (result.reason === 'DUPLICATE') setToastKind('duplicate');
+    else if (result.reason === 'STORAGE_FULL') setToastKind('storage_full');
+    else setToastKind('invalid');
+  }
+
+  async function handleCheckIn() {
+    fireHaptic('success');
+    const result = await addCheckIn(today, 'manual');
+    applyResult(result);
+  }
+
+  function openMemoSheet() {
+    fireHaptic('tickWeak');
+    setMemo('');
+    setMemoOpen(true);
+  }
+
+  function closeMemoSheet() {
+    setMemoOpen(false);
+    setMemo('');
+  }
+
+  async function handleSaveMemo() {
+    fireHaptic('success');
+    const result = await addCheckIn(today, 'manual', memo);
+    if (result.ok) {
+      setMemoOpen(false);
+      setMemo('');
+    }
+    applyResult(result);
+  }
+
+  if (isLoading) {
+    return (
+      <ScreenScaffold top={<Top title={<Top.TitleParagraph>무지출 챌린지</Top.TitleParagraph>} />}>
+        <LoadingState rows={4} testId="home-skeleton" />
+      </ScreenScaffold>
+    );
+  }
+
+  const weekStart = addDays(today, -6);
+  const weekCheckins = getCheckInsInRange(weekStart, today);
+  const recent = [...checkins].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 5);
+
+  const toastText =
+    toastKind === 'success'
+      ? `오늘도 0원! 스트릭 ${streak.current}일째`
+      : toastKind === 'duplicate'
+        ? '오늘은 이미 체크인했어요'
+        : toastKind === 'storage_full'
+          ? '저장 공간이 부족해요. 오래된 기록을 정리해주세요'
+          : toastKind === 'invalid'
+            ? '체크인할 수 없는 날짜예요'
+            : '';
 
   return (
     <ScreenScaffold
-      top={<Top title={<Top.TitleParagraph>ZeroSpendStreak</Top.TitleParagraph>} />}
+      top={<Top title={<Top.TitleParagraph>무지출 챌린지</Top.TitleParagraph>} />}
+      bottom={<FloatingTabBar items={TAB_ITEMS} />}
     >
-      {/* 시각 앵커: 헤드라인 + 카드 내 진입 버튼(부유 금지, display="block" 전체폭).
-          데이터 앱이면 value를 <Amount typography="t1" />(핵심 숫자)로 교체하라. */}
       <SummaryHero
-        label="ZeroSpendStreak"
-        value={<Paragraph.Text typography="t2">하루 지출 0원에 도전하고 연속 성공일수를 기록하며 친구와 순위를 겨루는 무지출 챌린지 스트릭 앱</Paragraph.Text>}
-        caption="로그인 없이 바로 쓸 수 있어요"
+        testId="streak-hero"
+        label="현재 스트릭"
+        value={<CountUp value={streak.current} unit="일째" typography="t1" />}
+        caption={`최고 ${streak.best}일 · 누적 ${streak.totalDays}일`}
         action={
-          // 라벨은 앱의 핵심 행동 동사로 교체하라 — "연봉 계산하기"/"기록 남기기" 등.
-          // generic "시작하기"/"확인"은 카피 규칙 위반. onClick도 실제 첫 화면 경로로.
-          <Button variant="fill" display="block" onClick={() => navigate('/')}>
-            첫 결과 보기
-          </Button>
+          <>
+            <Button
+              variant="fill"
+              display="block"
+              data-testid="checkin-button"
+              style={{ minHeight: 52 }}
+              disabled={checkedToday}
+              onClick={handleCheckIn}
+            >
+              {checkedToday ? '오늘 체크인 완료' : '오늘 0원 썼어요'}
+            </Button>
+            {checkedToday ? (
+              <>
+                <Spacing size={12} />
+                <Chip>내일 다시 도전</Chip>
+              </>
+            ) : (
+              <>
+                <Spacing size={8} />
+                <Button variant="weak" display="block" data-testid="memo-sheet-open" onClick={openMemoSheet}>
+                  메모 남기고 기록하기
+                </Button>
+              </>
+            )}
+          </>
         }
-        testId="home-hero"
       />
 
-      <Spacing size={24} />
+      <Spacing size={16} />
 
-      {/* 핵심 정보는 Card로 묶기(raw div 금지) — 위계 생성 */}
-      <Card testId="home-highlights">
-        {HIGHLIGHTS.map((h, idx) => (
-          <ListRow
-            key={idx}
-            contents={<ListRow.Texts type="2RowTypeA" top={h.title} bottom={h.description} />}
-          />
-        ))}
+      <Card testId="week-summary-card">
+        <Paragraph.Text typography="st11">이번 주</Paragraph.Text>
+        <Spacing size={4} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Paragraph.Text typography="t4">{`7일 중 ${weekCheckins.length}일 성공`}</Paragraph.Text>
+          <Chip>{`${weekCheckins.length}/7`}</Chip>
+        </div>
+      </Card>
+
+      <Spacing size={16} />
+
+      <Card testId="streak-stat-card">
+        <div style={{ display: 'flex', gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <Paragraph.Text typography="st11">최고 기록</Paragraph.Text>
+            <Spacing size={4} />
+            <Amount value={streak.best} unit="일" typography="t3" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <Paragraph.Text typography="st11">누적 일수</Paragraph.Text>
+            <Spacing size={4} />
+            <Amount value={streak.totalDays} unit="일" typography="t3" />
+          </div>
+        </div>
       </Card>
 
       <Spacing size={24} />
+
+      <Paragraph.Text typography="t4">최근 기록</Paragraph.Text>
+      <Spacing size={12} />
+
+      {recent.length === 0 ? (
+        <EmptyState iconName="iconEmptyBoxRegular" title="첫 무지출 도전을 시작해보세요" testId="home-empty" />
+      ) : (
+        <Card testId="recent-list-card">
+          {recent.map((c) => (
+            <ListRow
+              key={c.date}
+              contents={<ListRow.Texts type="2RowTypeA" top={formatKorean(c.date)} bottom={c.memo ?? '메모 없음'} />}
+              right={<Chip>{c.source === 'recovery' ? '복구' : '성공'}</Chip>}
+            />
+          ))}
+        </Card>
+      )}
+
+      <Spacing size={24} />
+      <AdSlot adGroupId="home-recent-bottom" />
+      <Spacing size={16} />
+
+      <BottomSheet open={memoOpen} onClose={closeMemoSheet}>
+        <div style={{ padding: 16 }}>
+          <Paragraph.Text typography="t4">오늘의 메모</Paragraph.Text>
+          <Spacing size={12} />
+          <TextField
+            variant="line"
+            label="메모"
+            placeholder="예: 편의점 대신 물 마시기"
+            enterKeyHint="done"
+            value={memo}
+            onChange={(e) => setMemo(e.target.value.slice(0, MEMO_MAX_LENGTH))}
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === 'Enter') e.currentTarget.blur();
+            }}
+          />
+          {memo.length >= MEMO_MAX_LENGTH ? (
+            <>
+              <Spacing size={4} />
+              <Paragraph.Text typography="st13" color="secondary">
+                메모는 50자까지 입력할 수 있어요
+              </Paragraph.Text>
+            </>
+          ) : null}
+          <Spacing size={16} />
+          <Button variant="fill" display="block" onClick={handleSaveMemo}>
+            저장
+          </Button>
+          <Spacing size={8} />
+          <Button variant="weak" display="block" onClick={closeMemoSheet}>
+            닫기
+          </Button>
+        </div>
+      </BottomSheet>
+
+      <Toast open={toastKind !== null} text={toastText} position="bottom" onClose={() => setToastKind(null)} />
     </ScreenScaffold>
   );
 }
