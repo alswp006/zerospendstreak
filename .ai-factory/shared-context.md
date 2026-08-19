@@ -197,9 +197,11 @@ expo
   components/
     AdSlot.tsx
     Amount.tsx
+    BannerSection.tsx
     BottomCTA.tsx
     Card.tsx
     CountUp.tsx
+    EmptyState.tsx
     FloatingTabBar.tsx
     MiniBar.tsx
     PageShell.tsx
@@ -210,6 +212,7 @@ expo
     TossPurchase.tsx
     TossRewardAd.tsx
   hooks/
+    useBadgeToast.ts
     useBadges.ts
     useCheckIns.ts
     useProfile.ts
@@ -252,9 +255,11 @@ expo
 ### Components (src/components/)
 - AdSlot.tsx: AdSlot
 - Amount.tsx: Amount
+- BannerSection.tsx: BannerSection
 - BottomCTA.tsx: SubmitFooter, ButtonStack
 - Card.tsx: Card
 - CountUp.tsx: CountUp
+- EmptyState.tsx: EmptyState
 - FloatingTabBar.tsx: FloatingTabBar
 - MiniBar.tsx: MiniBar
 - PageShell.tsx: PageShell
@@ -273,7 +278,7 @@ expo
   pages/Badges.tsx → imports: components/ScreenScaffold, components/Card, components/FloatingTabBar, hooks/useBadges, lib/badgeDefs, lib/types
   pages/Calendar.tsx → imports: components/ScreenScaffold, components/Card, components/StateView, components/FloatingTabBar, hooks/useCheckIns, lib/date
   pages/Onboarding.tsx → imports: components/ScreenScaffold, components/Card, hooks/useProfile
-  pages/Rank.tsx → imports: components/ScreenScaffold, components/Card, components/StateView, components/FloatingTabBar, components/AdSlot, hooks/useProfile, lib/rankApi, lib/storage, lib/typ...
+  pages/Rank.tsx → imports: components/ScreenScaffold, components...
 CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
 
 ## Already Implemented (do NOT duplicate or overwrite)
