@@ -13,48 +13,60 @@
  * 타입을 그대로 가정해도 된다. 추측이 어긋나 병합에서 무너지는 것을 막기 위한 파일이다.
  */
 
-import type { ReactNode } from 'react';
+export type CheckIn = { id: string; date: string; completed: boolean; memo?: string };
 
-export type CheckIn = { id: string; userId: string; date: string; createdAt: string };
+export type Badge = { id: string; name: string; description: string; unlockedAt?: string; icon?: string };
 
-export type Badge = { id: string; userId: string; badgeId: string; unlockedAt: string };
+export type User = { id: string; nickname: string; targetStreak: number; createdAt: string };
 
-export type Profile = { id: string; name: string; avatarUrl?: string; joinedAt: string };
+/** 0015의 라우팅 상태관리에서 필수 (구현: 패킷 0001) */
+export type RouteState = { route: string; params?: Record<string, any> };
 
-export type BadgeDef = { id: string; name: string; description: string; icon: string; condition: string };
+export type BadgeDef = { id: string; name: string; condition: string; tier?: number };
 
-/** Constant array; exported from src/lib/badgeDefs.ts (구현: 패킷 0002) */
-export type BADGE_DEFS = readonly BadgeDef[];
+/** 배지 정의 테이블 조회 함수 (구현: 패킷 0002) */
+export type BADGE_DEFSFn = () => BadgeDef[];
 
-export type formatDateKstFn = (date: Date | string) => string;
+/** KST 기준 오늘 날짜 (YYYY-MM-DD) (구현: 패킷 0002) */
+export type getKSTTodayFn = () => string;
 
-export type toKstDateFn = (date?: Date) => Date;
+export type formatDateFn = (date: string | Date, format?: 'short' | 'long') => string;
 
-export type getCheckInsFn = (userId: string) => CheckIn[];
+/** 체크인 저장 또는 업데이트 (구현: 패킷 0003) */
+export type saveCheckInFn = (checkIn: CheckIn) => Promise<CheckIn>;
 
-export type addCheckInFn = (userId: string, date: string) => Promise<CheckIn>;
+export type getCheckInsFn = (startDate: string, endDate: string) => Promise<CheckIn[]>;
 
-export type updateProfileFn = (userId: string, updates: Partial<Profile>) => Promise<void>;
+export type deleteCheckInFn = (id: string) => Promise<void>;
 
-export type getBadgesFn = (userId: string) => Badge[];
+export type getUserFn = () => Promise<User | null>;
 
-export type calculateStreakFn = (checkIns: CheckIn[], today?: Date) => { current: number; max: number };
+export type saveUserFn = (user: User) => Promise<User>;
 
-export type calculateStatsFn = (checkIns: CheckIn[]) => { total: number; thisMonth: number; average: number };
+/** 현재 스트릭 계산 (연속일 수) (구현: 패킷 0004) */
+export type calculateStreakFn = (checkIns: CheckIn[], today: string) => number;
 
-export type useCheckInsFn = () => { checkIns: CheckIn[]; addCheckIn: () => Promise<void>; isLoading: boolean };
+export type calculateStatsFn = (checkIns: CheckIn[]) => { totalDays: number; consistency: number; bestStreak: number };
 
-export type useBadgesFn = () => { badges: Badge[]; unlockedCount: number; isLoading: boolean };
+/** 체크인 이력으로부터 언락된 뱃지 목록 계산 (구현: 패킷 0004) */
+export type calculateUnlockedBadgesFn = (checkIns: CheckIn[]) => Badge[];
 
-export type useRecoveryFn = () => { canRecover: boolean; recover: () => Promise<void>; cost: number; isLoading: boolean };
+/** 체크인 상태 및 조작 훅 (구현: 패킷 0005) */
+export type useCheckInsFn = () => { checkIns: CheckIn[]; loading: boolean; addCheckIn: (date: string, completed: boolean, memo?: string) => Promise<void>; removeCheckIn: (id: string) => Promise<void> };
 
-export type useProfileFn = () => { profile: Profile; updateProfile: (data: Partial<Profile>) => Promise<void>; isLoading: boolean };
+export type useBadgesFn = () => { badges: Badge[]; unlockedBadges: Badge[]; loading: boolean };
 
-export type RankingEntry = { rank: number; userId: string; name: string; streak: number };
+export type useRecoveryFn = () => { canRecover: boolean; recoveryDaysLeft: number; recover: () => Promise<void> };
 
-export type fetchRankingFn = (limit?: number) => Promise<RankingEntry[]>;
+export type useProfileFn = () => { user: User | null; updateProfile: (nickname: string, targetStreak: number) => Promise<void>; loading: boolean };
 
-export type BannerSectionFn = React.FC<{ children?: ReactNode }>;
+/** 네트워크 격리: 랭킹 데이터 조회 (구현: 패킷 0007) */
+export type fetchRankingsFn = (limit?: number) => Promise<Array<{ rank: number; nickname: string; streak: number; badgeCount: number }>>;
+
+/** 여러 페이지에서 재사용되는 빈 상태 컴포넌트 (구현: 패킷 0016) */
+export type EmptyStateFn = (props: { icon: React.ReactNode; title: string; description: string; action?: React.ReactNode }) => React.ReactElement;
+
+export type useBadgeToastFn = () => { showBadgeUnlocked: (badge: Badge) => void };
 
 ```
 
@@ -244,7 +256,7 @@ expo
 
 ### Exports (src/lib/)
 - badgeDefs.ts: export const BADGE_DEFS: readonly BadgeDef[] = [; export function getBadgeDef(id: string): BadgeDef | undefined
-- contract.ts: export type CheckIn =; export type Badge =; export type Profile =; export type BadgeDef =; export type BADGE_DEFS = readonly BadgeDef[]; export type formatDateKstFn = (date: Date | string) => string; export type toKstDateFn = (date?: Date) => Date; export type getCheckInsFn = (userId: string) => CheckIn[]
+- contract.ts: export type CheckIn =; export type Badge =; export type User =; export type RouteState =; export type BadgeDef =; export type BADGE_DEFSFn = () => BadgeDef[]; export type getKSTTodayFn = () => string; export type formatDateFn = (date: string | Date, format?: 'short' | 'long') => string
 - date.ts: export function todayKST(): string; export function addDays(dateStr: string, days: number): string; export function diffDays(a: string, b: string): number; export function isValidDateStr(dateStr: string): boolean; export function formatKorean(dateStr: string): string; export function weekdayKey(dateStr: string): number; export function monthMatrix(year: number, month: number): (string | null)[]
 - engine.ts: export function calcStreak(checkins: CheckIn[], today: string): StreakState; export function calcRate( checkins: CheckIn[], today: string, windowDays: number, firstCheckInDate?: string ):; export function calcWeekdayRates(checkins: CheckIn[], today: string): WeekdayRates; export function calcWeeklyTrend(checkins: CheckIn[], today: string):; export function evaluateBadges( currentStreak: number, alreadyEarned: EarnedBadge[], badgeDefs: readonly BadgeDef[], tot; export function canRecover( targetDate: string, today: string, usages: RecoveryUsage[] ):
 - rankApi.ts: export type RankApiErrorCode = 'NETWORK' | 'SERVER' | 'ROOM_NOT_FOUND' | 'INVALID_PAYLOAD'; export type RankApiResult = |; export type JoinRoomResult = |; export type FetchRankResult = |; export function isRankEnabled(): boolean; export async function syncStreak( deviceUserId: string, nickname: string, currentStreak: number, bestStreak: number, tot; export async function joinRoom(deviceUserId: string, roomCode: string): Promise<JoinRoomResult>; export async function fetchRank(roomCode: string): Promise<FetchRankResult>
@@ -276,9 +288,8 @@ expo
   lib/rankApi.ts → imports: lib/types, lib/storage
   lib/storage.ts → imports: lib/types, lib/date
   pages/Badges.tsx → imports: components/ScreenScaffold, components/Card, components/FloatingTabBar, hooks/useBadges, lib/badgeDefs, lib/types
-  pages/Calendar.tsx → imports: components/ScreenScaffold, components/Card, components/StateView, components/FloatingTabBar, hooks/useCheckIns, lib/date
-  pages/Onboarding.tsx → imports: components/ScreenScaffold, components/Card, hooks/useProfile
-  pages/Rank.tsx → imports: components/ScreenScaffold, components...
+  pages/Calendar.tsx → imports: components/ScreenScaffold, components/Card, components/StateView, components/FloatingTabBar, hooks/useCheckIns, lib/date, lib/types
+  pages/Home.tsx → imports: components/ScreenScaffold, components/SummaryHero, components/CountUp, components/Amount, components/Card, components/EmptyState, components/...
 CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
 
 ## Already Implemented (do NOT duplicate or overwrite)
@@ -289,11 +300,15 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - 0006: 상태 훅 — useBadges / useRecovery / useProfile (files: src/hooks/useBadges.ts, src/hooks/useRecovery.ts, src/hooks/useProfile.ts)
 - 0007: 랭킹 API 클라이언트 (네트워크 격리) (files: src/lib/rankApi.ts)
 - 0008: 온보딩 화면 /onboarding (files: src/pages/Onboarding.tsx)
-- 0014: 랭킹 화면 /rank (files: src/pages/Rank.tsx)
-- 0015: 라우팅 배선 + 온보딩 가드 (App.tsx 단일 소유) (files: src/App.tsx)
 - 0010: 캘린더 화면 /calendar (files: src/pages/Calendar.tsx)
 - 0012: 통계 화면 /stats (files: src/pages/Stats.tsx)
 - 0013: 뱃지 컬렉션 화면 /badges (files: src/pages/Badges.tsx)
+- 0014: 랭킹 화면 /rank (files: src/pages/Rank.tsx)
+- 0015: 라우팅 배선 + 온보딩 가드 (App.tsx 단일 소유) (files: src/App.tsx)
+- 0016: 광고 배치 컴포넌트 + 검수 컴플라이언스 폴리시 (files: src/components/BannerSection.tsx, src/hooks/useBadgeToast.ts, src/components/EmptyState.tsx)
+
+## TDD 상태
+⚠️ TDD 테스트 파일 자동 작성에 실패했습니다. 소스 코드를 작성하기 전에 `src/__tests__/packet-XXXX.test.ts` 파일에 AC 기반 테스트를 먼저 작성하세요 (TDD red phase). 테스트 작성 후 구현하세요.
 
 ## Available exports from existing files
 // src/App.tsx
@@ -305,6 +320,9 @@ export function AdSlot({ adGroupId, className, variant, theme }: AdSlotProps) {
 // src/components/Amount.tsx
 export function Amount({
 
+// src/components/BannerSection.tsx
+export function BannerSection({ gap = 24 }: BannerSectionProps = {}) {
+
 // src/components/BottomCTA.tsx
 export function SubmitFooter({
 export function ButtonStack({
@@ -314,6 +332,9 @@ export function Card({
 
 // src/components/CountUp.tsx
 export function CountUp({
+
+// src/components/EmptyState.tsx
+export function EmptyState({
 
 // src/components/FloatingTabBar.tsx
 export type TabItem = {
@@ -345,13 +366,13 @@ export function TossPurchase({
 // src/components/TossRewardAd.tsx
 export function TossRewardAd({
 
+// src/hooks/useBadgeToast.ts
+export interface UseBadgeToastResult {
+export function useBadgeToast(earned: EarnedBadge[]): UseBadgeToastResult {
+
 // src/hooks/useBadges.ts
 export interface UseBadgesResult {
 export function useBadges(): UseBadgesResult {
-
-// src/hooks/useCheckIns.ts
-export interface UseCheckInsResult {
-export function useCheckIns(): UseCheckInsResult {
 
 // src/hooks/useProfile.ts
 export type SetNicknameResult = { ok: true } | { ok: false; reason: 'INVALID_NICKNAME' | 'STORAGE_FULL' };
@@ -361,12 +382,7 @@ export function useProfile(): UseProfileResult {
 // src/hooks/useRecovery.ts
 export type EarnTicketResult =
 export type UseTicketResult = { ok: true } | { ok: false; reason: 'NO_TICKETS' | 'STORAGE_FULL' };
-export interface UseRecoveryResult {
-export function useRecovery(): UseRecoveryResult {
-
-// src/lib/badgeDefs.ts
-export const BADGE_DEFS: readonly BadgeDef[] = [
-export function getBadgeDef(id: string): B
+expo
 
 ## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
 

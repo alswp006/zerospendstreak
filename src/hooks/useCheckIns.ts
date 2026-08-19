@@ -101,8 +101,12 @@ function useCheckInsWithState(): UseCheckInsResult {
   }, []);
 
   useEffect(() => {
-    reload();
-    setIsLoading(false);
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (cancelled) return;
+      reload();
+      setIsLoading(false);
+    });
 
     function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
@@ -112,6 +116,7 @@ function useCheckInsWithState(): UseCheckInsResult {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
+      cancelled = true;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [reload]);
